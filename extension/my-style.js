@@ -35,6 +35,11 @@
     };
   }
 
+  /* Store CSS per hostname, similar to the scoping of localStorage. */
+  function storageKey() {
+    return location.hostname;
+  }
+
   /* Remove whitespace on the edges of this string. */
   String.prototype.trim = function() {
     return this.replace(/(^\s+|\s+$)/g, '');
@@ -55,8 +60,15 @@
     head.appendChild(style);
     body.appendChild(textarea);
 
-    style.innerHTML = localStorage.myStyle || '';
-    textarea.value = style.innerHTML;
+    chrome.storage.sync.get(storageKey(), function(obj){
+      if (!obj || !obj[storageKey()]) {
+        return;
+      }
+
+      style.innerHTML = obj[storageKey()];
+      textarea.value = style.innerHTML;
+    });
+
     textarea.placeholder = '/* Enter your styles here. */';
 
     // alt + click on an element adds its selector to the textarea
@@ -128,7 +140,14 @@
 
     /* Save styles persistently in local storage. */
     var saveStyles = throttle(function() {
-      localStorage.myStyle = style.innerHTML;
+      var obj = {};
+      obj[storageKey()] = style.innerHTML;
+
+      textarea.setAttribute('syncing', true);
+
+      chrome.storage.sync.set(obj, function() {
+        textarea.setAttribute('syncing', false);
+      });
     }, 500);
 
     /* Updates styles with content in textarea and saves styles. */
