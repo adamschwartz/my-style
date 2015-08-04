@@ -62,7 +62,14 @@
 
     chrome.storage.sync.get(getStorageKey(), function(savedStyles){
       if (!savedStyles || !savedStyles[getStorageKey()]) {
-        return;
+        // migrate old localStorage persistence if present
+        if (localStorage.myStyle) {
+          savedStyles = savedStyles || {};
+          savedStyles[getStorageKey()] = localStorage.myStyle;
+          saveStyles();
+        } else {
+          return;
+        }
       }
 
       style.innerHTML = savedStyles[getStorageKey()];
@@ -103,7 +110,7 @@
         // fill CSS with styles defined in the style attribute
         if (target.getAttribute('style')) {
           stylesList = target.getAttribute('style').split(';');
-        
+
           // keep track of CSS properties already defined in style attribute
           for (i = 0; i < stylesList.length; i++) {
             // condense mutliple whitespace into one space
@@ -115,7 +122,7 @@
             }
           }
         }
-        
+
         // construct text to add to textarea
         if (selector) {
           // add existing styles in braces
