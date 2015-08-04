@@ -36,7 +36,7 @@
   }
 
   /* Store CSS per hostname, similar to the scoping of localStorage. */
-  function storageKey() {
+  function getStorageKey() {
     return location.hostname;
   }
 
@@ -60,12 +60,12 @@
     head.appendChild(style);
     body.appendChild(textarea);
 
-    chrome.storage.sync.get(storageKey(), function(obj){
-      if (!obj || !obj[storageKey()]) {
+    chrome.storage.sync.get(getStorageKey(), function(savedStyles){
+      if (!savedStyles || !savedStyles[getStorageKey()]) {
         return;
       }
 
-      style.innerHTML = obj[storageKey()];
+      style.innerHTML = savedStyles[getStorageKey()];
       textarea.value = style.innerHTML;
     });
 
@@ -140,13 +140,13 @@
 
     /* Save styles persistently in local storage. */
     var saveStyles = throttle(function() {
-      var obj = {};
-      obj[storageKey()] = style.innerHTML;
+      var styles = {};
+      styles[getStorageKey()] = style.innerHTML;
 
-      textarea.setAttribute('syncing', true);
+      textarea.setAttribute('data-syncing', true);
 
-      chrome.storage.sync.set(obj, function() {
-        textarea.setAttribute('syncing', false);
+      chrome.storage.sync.set(styles, function() {
+        textarea.setAttribute('data-syncing', false);
       });
     }, 500);
 
